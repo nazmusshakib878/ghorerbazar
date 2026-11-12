@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --primary-color: #f48721;
+  --primary-hover: #df7412;
+  --secondary-color: #041f1e;
+  --title-color: #222831;
+  --paragraph-color: #252a34;
+  --muted-color: #6b7280;
+  --border-color: #e5e7eb;
+  --surface-cream: #faf8f4;
+  --badge-green: #088d2d;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: var(--paragraph-color);
+    font-family: var(--font-open-sans), var(--font-bengali), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+}
+
+.font-bengali {
+  font-family: var(--font-bengali), var(--font-open-sans), sans-serif;
+}
+
+/* Dual range slider styling */
+input[type="range"].gb-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+input[type="range"].gb-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: #f48721;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+input[type="range"].gb-range::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: #f48721;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Hide scrollbars for horizontal carousels when needed */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
