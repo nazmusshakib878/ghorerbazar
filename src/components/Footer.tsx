@@ -8,6 +8,8 @@ import { BrandLogoSvg, MailIcon, PhoneIcon, TrackPinIcon } from "@/components/Ic
 export function Footer() {
   const [logoError, setLogoError] = useState(false);
   const [payImgError, setPayImgError] = useState(false);
+  const [playErr, setPlayErr] = useState(false);
+  const [appErr, setAppErr] = useState(false);
 
   return (
     <footer className="bg-white border-t border-gray-200 pt-12 pb-6 text-[#4b5563]">
@@ -112,29 +114,43 @@ export function Footer() {
                   href="https://play.google.com/store/apps/details?id=com.ghorerbazar.official"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md bg-[#111827] text-white px-3 py-1.5 hover:bg-black transition-colors"
+                  className="inline-block"
                 >
-                  <svg className="h-5 w-5 text-[#34d399]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M4 2.5l12.5 9.5L4 21.5V2.5zm14.2 10.8L16.5 12l1.7-1.3 2.5 1.3-2.5 1.3z" />
-                  </svg>
-                  <div className="leading-none">
-                    <span className="block text-[9px] uppercase opacity-80">GET IT ON</span>
-                    <span className="block text-[12.5px] font-semibold">Google Play</span>
-                  </div>
+                  {playErr ? (
+                    <span className="inline-flex items-center gap-2 rounded-md bg-[#111827] text-white px-3 py-1.5 text-xs font-semibold">
+                      Google Play
+                    </span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={SITE_ASSETS.googlePlayBadge}
+                      alt="Get it on Google Play"
+                      referrerPolicy="no-referrer"
+                      onError={() => setPlayErr(true)}
+                      className="h-9 w-auto object-contain"
+                    />
+                  )}
                 </a>
                 <a
                   href="https://apps.apple.com/app/ghorer-bazar/id6764511612"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md bg-white border border-gray-300 text-[#111827] px-3 py-1.5 hover:border-gray-400 transition-colors"
+                  className="inline-block"
                 >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16.37 12.82c0-2.1 1.72-3.12 1.8-3.17-1-1.45-2.54-1.65-3.08-1.67-1.3-.13-2.56.78-3.22.78-.67 0-1.69-.76-2.79-.74-1.42.02-2.74.84-3.47 2.11-1.49 2.58-.38 6.4 1.06 8.49.71 1.02 1.54 2.17 2.64 2.13 1.07-.04 1.47-.68 2.77-.68 1.29 0 1.66.68 2.78.66 1.15-.02 1.88-1.03 2.58-2.06.82-1.19 1.15-2.35 1.17-2.41-.03-.01-2.24-.86-2.24-3.44zM14.27 6.62c.58-.72.98-1.7.87-2.69-.84.04-1.87.56-2.47 1.27-.54.62-1.01 1.63-.88 2.59.94.07 1.9-.46 2.48-1.17z" />
-                  </svg>
-                  <div className="leading-none">
-                    <span className="block text-[9px] opacity-80">Download on the</span>
-                    <span className="block text-[12.5px] font-semibold">App Store</span>
-                  </div>
+                  {appErr ? (
+                    <span className="inline-flex items-center gap-2 rounded-md bg-white border border-gray-300 text-[#111827] px-3 py-1.5 text-xs font-semibold">
+                      App Store
+                    </span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={SITE_ASSETS.appStoreBadge}
+                      alt="Download on the App Store"
+                      referrerPolicy="no-referrer"
+                      onError={() => setAppErr(true)}
+                      className="h-9 w-auto object-contain"
+                    />
+                  )}
                 </a>
               </div>
             </div>
@@ -307,40 +323,40 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Payment Gateway Strip */}
-        <div className="border-t border-gray-200 py-5 flex flex-col md:flex-row items-center justify-center gap-4">
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="text-sm font-semibold text-[#222831]">Pay With</span>
-            <span className="hidden md:inline-block h-10 w-[1px] bg-gray-300" />
+        {/* Bottom Copyright + Pay With Row (matching ghorerbazar.com) */}
+        <div className="border-t border-gray-200 pt-5 flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="text-[13.5px] text-[#6b7280] shrink-0">
+            Copyright &copy; 2026 GhorerBazar
           </div>
-          {payImgError ? (
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-bold text-[#222831]">
-              {["VISA", "Mastercard", "AMEX", "bKash", "Nagad", "Rocket", "Upay", "DBBL Nexus", "SSLCOMMERZ"].map(
-                (label) => (
-                  <span
-                    key={label}
-                    className="rounded border border-gray-200 bg-white px-2.5 py-1 shadow-2xs"
-                  >
-                    {label}
-                  </span>
-                )
-              )}
-            </div>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={SITE_ASSETS.paymentGateway}
-              alt="Pay With VISA, Mastercard, American Express, bKash, Nagad, Rocket, SSLCOMMERZ"
-              referrerPolicy="no-referrer"
-              onError={() => setPayImgError(true)}
-              className="max-h-[76px] w-auto object-contain"
-            />
-          )}
-        </div>
 
-        {/* Copyright */}
-        <div className="border-t border-gray-100 pt-4 text-center text-[13.5px] text-[#6b7280]">
-          Copyright &copy; 2026 GhorerBazar
+          <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3">
+            <span className="text-sm font-semibold text-[#222831] shrink-0">
+              Pay With
+            </span>
+            {payImgError ? (
+              <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs font-bold text-[#222831]">
+                {["VISA", "Mastercard", "AMEX", "bKash", "Nagad", "Rocket", "SSLCOMMERZ"].map(
+                  (label) => (
+                    <span
+                      key={label}
+                      className="rounded border border-gray-200 bg-white px-2.5 py-1 shadow-2xs"
+                    >
+                      {label}
+                    </span>
+                  )
+                )}
+              </div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={SITE_ASSETS.paymentGateway}
+                alt="Pay With VISA, Mastercard, American Express, bKash, Nagad, Rocket, SSLCOMMERZ"
+                referrerPolicy="no-referrer"
+                onError={() => setPayImgError(true)}
+                className="max-h-[72px] w-auto object-contain"
+              />
+            )}
+          </div>
         </div>
       </div>
     </footer>

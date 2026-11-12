@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Product } from "@/data/catalog";
 import { ProductCard } from "@/components/ProductCard";
@@ -17,16 +17,28 @@ export function ProductCarouselSection({
   viewAllHref,
   products,
 }: ProductCarouselSectionProps) {
+  const [perView, setPerView] = useState(5);
   const [startIndex, setStartIndex] = useState(0);
-  const perView = 5;
+
+  useEffect(() => {
+    const updatePerView = () => {
+      const w = window.innerWidth;
+      if (w < 640) setPerView(2);
+      else if (w < 768) setPerView(3);
+      else if (w < 1024) setPerView(4);
+      else setPerView(5);
+    };
+    updatePerView();
+    window.addEventListener("resize", updatePerView);
+    return () => window.removeEventListener("resize", updatePerView);
+  }, []);
+
   const maxStart = Math.max(0, products.length - perView);
-
-  const visibleProducts = useMemo(() => {
-    if (products.length <= perView) return products;
-    return products.slice(startIndex, startIndex + perView);
-  }, [products, startIndex]);
-
+  const safeStart = Math.min(startIndex, maxStart);
   const totalDots = Math.max(1, maxStart + 1);
+
+  const prev = () => setStartIndex((s) => (s <= 0 ? maxStart : s - 1));
+  const next = () => setStartIndex((s) => (s >= maxStart ? 0 : s + 1));
 
   return (
     <section className="mx-auto max-w-[1320px] px-3 sm:px-6 pb-11">
@@ -47,31 +59,44 @@ export function ProductCarouselSection({
         </Link>
       </div>
 
-      {/* 5-Column Responsive Carousel */}
+      {/* Smooth Sliding Track */}
       <div className="relative group/slider">
-        {products.length > perView && startIndex > 0 && (
+        {products.length > perView && (
           <button
             type="button"
-            onClick={() => setStartIndex((prev) => Math.max(0, prev - 1))}
+            onClick={prev}
             aria-label={`Previous ${title}`}
-            className="hidden md:flex absolute -left-3.5 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-white border border-gray-200 text-[#222831] hover:bg-[#f48721] hover:text-white hover:border-[#f48721] items-center justify-center shadow-md transition-all cursor-pointer"
+            className="flex absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-white border border-gray-200 text-[#222831] hover:bg-[#f48721] hover:text-white hover:border-[#f48721] items-center justify-center shadow-md lg:opacity-0 lg:group-hover/slider:opacity-100 transition-all cursor-pointer"
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
-          {visibleProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="overflow-hidden py-1">
+          <div
+            className="flex transition-transform duration-500 ease-out"
+            style={{
+              transform: `translateX(-${(safeStart * 100) / perView}%)`,
+            }}
+          >
+            {products.map((product) => (
+              <div
+                key={product.id}
+                style={{ width: `${100 / perView}%` }}
+                className="shrink-0 px-1.5 sm:px-2"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
         </div>
 
-        {products.length > perView && startIndex < maxStart && (
+        {products.length > perView && (
           <button
             type="button"
-            onClick={() => setStartIndex((prev) => Math.min(maxStart, prev + 1))}
+            onClick={next}
             aria-label={`Next ${title}`}
-            className="hidden md:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-white border border-gray-200 text-[#222831] hover:bg-[#f48721] hover:text-white hover:border-[#f48721] items-center justify-center shadow-md transition-all cursor-pointer"
+            className="flex absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-white border border-gray-200 text-[#222831] hover:bg-[#f48721] hover:text-white hover:border-[#f48721] items-center justify-center shadow-md lg:opacity-0 lg:group-hover/slider:opacity-100 transition-all cursor-pointer"
           >
             <ChevronRightIcon className="h-5 w-5" />
           </button>
@@ -88,7 +113,7 @@ export function ProductCarouselSection({
               onClick={() => setStartIndex(idx)}
               aria-label={`${title} slide ${idx + 1}`}
               className={`h-2.5 w-2.5 rounded-full transition-colors cursor-pointer ${
-                idx === startIndex
+                idx === safeStart
                   ? "bg-[#f48721]"
                   : "border border-[#f48721] bg-transparent hover:bg-[#f48721]/30"
               }`}

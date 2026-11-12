@@ -338,17 +338,28 @@ export function Header() {
                   onMouseEnter={() => hasSub && setOpenDropdown(item.label)}
                   onMouseLeave={() => setOpenDropdown(null)}
                 >
-                  <Link
-                    href={item.href}
-                    className={`inline-flex items-center gap-1 py-3 px-1.5 text-[13.5px] font-medium whitespace-nowrap transition-colors ${
-                      item.highlight || isActive
-                        ? "text-[#f48721]"
-                        : "text-white hover:text-[#f48721]"
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    {hasSub && <ChevronDownIcon className="h-3.5 w-3.5 opacity-80" />}
-                  </Link>
+                  {item.external ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 py-3 px-1.5 text-[13.5px] font-medium whitespace-nowrap transition-colors text-white hover:text-[#f48721]"
+                    >
+                      <span>{item.label}</span>
+                    </a>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={`inline-flex items-center gap-1 py-3 px-1.5 text-[13.5px] font-medium whitespace-nowrap transition-colors ${
+                        item.highlight || isActive
+                          ? "text-[#f48721]"
+                          : "text-white hover:text-[#f48721]"
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      {hasSub && <ChevronDownIcon className="h-3.5 w-3.5 opacity-80" />}
+                    </Link>
+                  )}
 
                   {hasSub && openDropdown === item.label && (
                     <div className="absolute left-0 top-full w-56 rounded-b-lg bg-white border border-gray-200 shadow-xl py-2 z-[75]">
@@ -390,20 +401,32 @@ export function Header() {
               </button>
             </div>
             <div className="divide-y divide-gray-100 py-2">
-              {NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`flex items-center justify-between px-4 py-3 text-sm font-medium ${
-                    item.highlight ? "text-[#f48721]" : "text-[#222831]"
-                  } hover:bg-[#fff8f1]`}
-                >
-                  <span>{item.label}</span>
-                  {item.subcategories && (
-                    <ChevronDownIcon className="h-4 w-4 -rotate-90 text-gray-400" />
-                  )}
-                </Link>
-              ))}
+              {NAV_ITEMS.map((item) =>
+                item.external ? (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between px-4 py-3 text-sm font-medium text-[#222831] hover:bg-[#fff8f1] hover:text-[#f48721]"
+                  >
+                    <span>{item.label}</span>
+                  </a>
+                ) : (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`flex items-center justify-between px-4 py-3 text-sm font-medium ${
+                      item.highlight ? "text-[#f48721]" : "text-[#222831]"
+                    } hover:bg-[#fff8f1]`}
+                  >
+                    <span>{item.label}</span>
+                    {item.subcategories && (
+                      <ChevronDownIcon className="h-4 w-4 -rotate-90 text-gray-400" />
+                    )}
+                  </Link>
+                )
+              )}
             </div>
             <div className="mt-auto border-t border-gray-200 p-4 space-y-2.5 bg-[#faf8f4]">
               <Link

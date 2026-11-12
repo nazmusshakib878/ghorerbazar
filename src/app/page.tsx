@@ -6,6 +6,7 @@ import { TopSellingSection } from "@/components/TopSellingSection";
 import { BrandCarousel } from "@/components/BrandCarousel";
 import { ProductCarouselSection } from "@/components/ProductCarouselSection";
 import { JustForYouSection } from "@/components/JustForYouSection";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { SafeImage } from "@/components/SafeImage";
 
 export default function HomePage() {
@@ -27,13 +28,13 @@ export default function HomePage() {
       {/* Hero Slider + Promo Banner */}
       <HeroSection />
 
-      {/* 10 Featured Categories */}
+      {/* 10 Featured Categories Carousel */}
       <FeaturedCategories />
 
-      {/* 4 Featured Horizontal Top Selling Cards */}
+      {/* 2x2 Top Selling Products Showcase */}
       <TopSellingSection />
 
-      {/* Our Brands */}
+      {/* Our Brands Carousel */}
       <BrandCarousel />
 
       {/* All Natural Honey */}
@@ -71,15 +72,18 @@ export default function HomePage() {
         products={cookingEssentials}
       />
 
-      {/* Organic Food */}
+      {/* Organic Certified */}
       <ProductCarouselSection
-        title="Organic Food"
-        viewAllHref="/collections/organic-food"
+        title="Organic Certified"
+        viewAllHref="/collections/organic-certified"
         products={organicFood}
       />
 
       {/* Just For You Grid */}
       <JustForYouSection />
+
+      {/* Customer Testimonials Carousel */}
+      <TestimonialsSection />
     </div>
   );
 }

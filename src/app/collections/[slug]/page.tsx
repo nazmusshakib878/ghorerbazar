@@ -1,9 +1,9 @@
 "use client";
 
-import React, { Suspense, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { BRANDS, CATEGORIES, PRODUCTS, formatTaka } from "@/data/catalog";
+import { CATEGORIES, PRODUCTS, formatTaka } from "@/data/catalog";
 import { ProductCard } from "@/components/ProductCard";
 import { CloseIcon } from "@/components/Icons";
 
@@ -19,10 +19,10 @@ const COLLECTION_TITLES: Record<string, string> = {
   rice: "Rice",
   "flours-lentils": "Flours & Lentils",
   "organic-5": "Organic",
-  "organic-certified": "Certified Organic",
+  "organic-certified": "Organic Certified",
   "functional-food": "Functional Food",
   "cooking-essentials": "Cooking Essentials",
-  "organic-food": "Organic Food",
+  "organic-food": "Organic Certified",
   pickle: "Pickle",
 };
 
@@ -33,53 +33,19 @@ function CollectionViewInner() {
   const searchQuery = searchParams.get("q") || "";
   const initialSub = searchParams.get("sub") || "";
 
-  const [selectedSubs, setSelectedSubs] = useState<string[]>(
-    initialSub ? [initialSub] : []
-  );
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedFlags, setSelectedFlags] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(5000);
-  const [sortBy, setSortBy] = useState("default");
-  const [perPage, setPerPage] = useState(16);
-  const [page, setPage] = useState(1);
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-
   const activeCategory = CATEGORIES.find((c) => c.slug === slug);
   const title = searchQuery
     ? `Search: "${searchQuery}"`
     : COLLECTION_TITLES[slug] || activeCategory?.name || "All Products";
 
-  const subcategoryOptions = useMemo(() => {
-    if (activeCategory) return activeCategory.subcategories;
-    const set = new Set<string>();
-    PRODUCTS.forEach((p) => {
-      if (p.subcategory) set.add(p.subcategory);
-    });
-    return Array.from(set);
-  }, [activeCategory]);
-
-  const toggleItem = (
-    list: string[],
-    setList: React.Dispatch<React.SetStateAction<string[]>>,
-    val: string
-  ) => {
-    setPage(1);
-    setList((prev) =>
-      prev.includes(val) ? prev.filter((item) => item !== val) : [...prev, val]
-    );
-  };
-
-  const filteredProducts = useMemo(() => {
+  // Base collection products (before sidebar filters)
+  const collectionProducts = useMemo(() => {
     let list = [...PRODUCTS];
-
-    // Collection filter
     if (slug === "offer-zone") {
       list = list.filter(
         (p) =>
           Boolean(p.regularPrice && p.regularPrice > p.price) ||
-          p.badgeLeft === "Offered Items" ||
-          Boolean(p.isFreeGiftPromo)
+          p.badgeLeft === "Offered Items"
       );
     } else if (slug === "cooking-essentials") {
       list = list.filter((p) => p.sections.includes("cooking-essentials"));
@@ -101,7 +67,6 @@ function CollectionViewInner() {
       }
     }
 
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter(
@@ -112,20 +77,79 @@ function CollectionViewInner() {
           (p.subcategory && p.subcategory.toLowerCase().includes(q))
       );
     }
+    return list;
+  }, [slug, searchQuery]);
 
-    // Subcategory checklist
+  const ceilingPrice = useMemo(() => {
+    const maxFound = collectionProducts.reduce(
+      (max, p) => Math.max(max, p.price),
+      500
+    );
+    return Math.ceil(maxFound / 100) * 100;
+  }, [collectionProducts]);
+
+  const [selectedSubs, setSelectedSubs] = useState<string[]>(
+    initialSub ? [initialSub] : []
+  );
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedFlags, setSelectedFlags] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(ceilingPrice);
+  const [sortBy, setSortBy] = useState("default");
+  const [perPage, setPerPage] = useState(16);
+  const [page, setPage] = useState(1);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  useEffect(() => {
+    setMinPrice(0);
+    setMaxPrice(ceilingPrice);
+    setSelectedBrands([]);
+    setSelectedFlags([]);
+    setSelectedSubs(initialSub ? [initialSub] : []);
+    setPage(1);
+  }, [slug, ceilingPrice, initialSub]);
+
+  const subcategoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    collectionProducts.forEach((p) => {
+      if (p.subcategory) set.add(p.subcategory);
+    });
+    if (set.size === 0 && activeCategory) {
+      activeCategory.subcategories.forEach((s) => set.add(s));
+    }
+    return Array.from(set);
+  }, [collectionProducts, activeCategory]);
+
+  const brandOptions = useMemo(() => {
+    const set = new Set<string>();
+    collectionProducts.forEach((p) => set.add(p.brand));
+    return Array.from(set);
+  }, [collectionProducts]);
+
+  const toggleItem = (
+    list: string[],
+    setList: React.Dispatch<React.SetStateAction<string[]>>,
+    val: string
+  ) => {
+    setPage(1);
+    setList((prev) =>
+      prev.includes(val) ? prev.filter((item) => item !== val) : [...prev, val]
+    );
+  };
+
+  const filteredProducts = useMemo(() => {
+    let list = [...collectionProducts];
+
     if (selectedSubs.length > 0) {
       list = list.filter(
         (p) => p.subcategory && selectedSubs.includes(p.subcategory)
       );
     }
 
-    // Brand checklist
     if (selectedBrands.length > 0) {
       list = list.filter((p) => selectedBrands.includes(p.brand));
     }
 
-    // Product flag checklist
     if (selectedFlags.length > 0) {
       list = list.filter((p) => {
         if (selectedFlags.includes("Best Selling") && p.badgeLeft === "Best Selling")
@@ -141,10 +165,8 @@ function CollectionViewInner() {
       });
     }
 
-    // Price range
     list = list.filter((p) => p.price >= minPrice && p.price <= maxPrice);
 
-    // Sort
     if (sortBy === "price-asc") {
       list.sort((a, b) => a.price - b.price);
     } else if (sortBy === "price-desc") {
@@ -162,8 +184,7 @@ function CollectionViewInner() {
 
     return list;
   }, [
-    slug,
-    searchQuery,
+    collectionProducts,
     selectedSubs,
     selectedBrands,
     selectedFlags,
@@ -184,7 +205,7 @@ function CollectionViewInner() {
     setSelectedBrands([]);
     setSelectedFlags([]);
     setMinPrice(0);
-    setMaxPrice(5000);
+    setMaxPrice(ceilingPrice);
     setSortBy("default");
     setPage(1);
   };
@@ -192,29 +213,31 @@ function CollectionViewInner() {
   const sidebarContent = (
     <div className="space-y-4">
       {/* Filter by Category */}
-      <div className="rounded-[8px] border border-[#e5e7eb] bg-white p-4 shadow-xs">
-        <div className="border-b border-gray-100 pb-2 mb-3">
-          <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#222831] inline-block border-b-2 border-[#f48721] pb-1 -mb-[9px]">
-            FILTER BY CATEGORY
-          </h3>
+      {subcategoryOptions.length > 0 && (
+        <div className="rounded-[8px] border border-[#e5e7eb] bg-white p-4 shadow-xs">
+          <div className="border-b border-gray-100 pb-2 mb-3">
+            <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#222831] inline-block border-b-2 border-[#f48721] pb-1 -mb-[9px]">
+              FILTER BY CATEGORY
+            </h3>
+          </div>
+          <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+            {subcategoryOptions.map((sub) => (
+              <label
+                key={sub}
+                className="flex items-center gap-2.5 text-[13.5px] text-[#374151] hover:text-[#f48721] cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedSubs.includes(sub)}
+                  onChange={() => toggleItem(selectedSubs, setSelectedSubs, sub)}
+                  className="h-4 w-4 rounded border-gray-300 accent-[#f48721]"
+                />
+                <span>{sub}</span>
+              </label>
+            ))}
+          </div>
         </div>
-        <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
-          {subcategoryOptions.map((sub) => (
-            <label
-              key={sub}
-              className="flex items-center gap-2.5 text-[13.5px] text-[#374151] hover:text-[#f48721] cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={selectedSubs.includes(sub)}
-                onChange={() => toggleItem(selectedSubs, setSelectedSubs, sub)}
-                className="h-4 w-4 rounded border-gray-300 accent-[#f48721]"
-              />
-              <span>{sub}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Price Range */}
       <div className="rounded-[8px] border border-[#e5e7eb] bg-white p-4 shadow-xs">
@@ -234,20 +257,20 @@ function CollectionViewInner() {
             <div
               className="absolute h-1.5 rounded-full bg-[#f48721]"
               style={{
-                left: `${(minPrice / 5000) * 100}%`,
-                right: `${100 - (maxPrice / 5000) * 100}%`,
+                left: `${(minPrice / ceilingPrice) * 100}%`,
+                right: `${100 - (maxPrice / ceilingPrice) * 100}%`,
               }}
             />
           </div>
           <input
             type="range"
             min={0}
-            max={5000}
+            max={ceilingPrice}
             step={50}
             value={minPrice}
             onChange={(e) => {
-              const v = Math.min(Number(e.target.value), maxPrice - 100);
-              setMinPrice(v);
+              const v = Math.min(Number(e.target.value), maxPrice - 50);
+              setMinPrice(Math.max(0, v));
               setPage(1);
             }}
             aria-label="Minimum price"
@@ -256,12 +279,12 @@ function CollectionViewInner() {
           <input
             type="range"
             min={0}
-            max={5000}
+            max={ceilingPrice}
             step={50}
             value={maxPrice}
             onChange={(e) => {
-              const v = Math.max(Number(e.target.value), minPrice + 100);
-              setMaxPrice(v);
+              const v = Math.max(Number(e.target.value), minPrice + 50);
+              setMaxPrice(Math.min(ceilingPrice, v));
               setPage(1);
             }}
             aria-label="Maximum price"
@@ -271,31 +294,33 @@ function CollectionViewInner() {
       </div>
 
       {/* Brands */}
-      <div className="rounded-[8px] border border-[#e5e7eb] bg-white p-4 shadow-xs">
-        <div className="border-b border-gray-100 pb-2 mb-3">
-          <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#222831] inline-block border-b-2 border-[#f48721] pb-1 -mb-[9px]">
-            BRANDS
-          </h3>
+      {brandOptions.length > 0 && (
+        <div className="rounded-[8px] border border-[#e5e7eb] bg-white p-4 shadow-xs">
+          <div className="border-b border-gray-100 pb-2 mb-3">
+            <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#222831] inline-block border-b-2 border-[#f48721] pb-1 -mb-[9px]">
+              BRANDS
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {brandOptions.map((brand) => (
+              <label
+                key={brand}
+                className="flex items-center gap-2.5 text-[13.5px] text-[#374151] hover:text-[#f48721] cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedBrands.includes(brand)}
+                  onChange={() =>
+                    toggleItem(selectedBrands, setSelectedBrands, brand)
+                  }
+                  className="h-4 w-4 rounded border-gray-300 accent-[#f48721]"
+                />
+                <span>{brand}</span>
+              </label>
+            ))}
+          </div>
         </div>
-        <div className="space-y-2">
-          {BRANDS.map((brand) => (
-            <label
-              key={brand.id}
-              className="flex items-center gap-2.5 text-[13.5px] text-[#374151] hover:text-[#f48721] cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={selectedBrands.includes(brand.name)}
-                onChange={() =>
-                  toggleItem(selectedBrands, setSelectedBrands, brand.name)
-                }
-                className="h-4 w-4 rounded border-gray-300 accent-[#f48721]"
-              />
-              <span>{brand.name}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Product Flag */}
       <div className="rounded-[8px] border border-[#e5e7eb] bg-white p-4 shadow-xs">
@@ -326,7 +351,7 @@ function CollectionViewInner() {
         selectedBrands.length > 0 ||
         selectedFlags.length > 0 ||
         minPrice > 0 ||
-        maxPrice < 5000) && (
+        maxPrice < ceilingPrice) && (
         <button
           type="button"
           onClick={resetFilters}
@@ -340,7 +365,6 @@ function CollectionViewInner() {
 
   return (
     <div className="mx-auto max-w-[1320px] px-3 sm:px-6 py-6">
-      {/* Page Title & Breadcrumb */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
         <h1 className="text-[22px] sm:text-[26px] font-semibold text-[#222831]">
           {title}
@@ -355,12 +379,9 @@ function CollectionViewInner() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Filter Sidebar (Desktop) */}
         <aside className="hidden lg:block lg:col-span-3">{sidebarContent}</aside>
 
-        {/* Right Toolbar + Product Grid */}
         <div className="lg:col-span-9 space-y-5">
-          {/* Toolbar */}
           <div className="rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               <button
@@ -415,7 +436,6 @@ function CollectionViewInner() {
             </div>
           </div>
 
-          {/* Product Grid */}
           {pagedProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
               {pagedProducts.map((product) => (
@@ -440,7 +460,6 @@ function CollectionViewInner() {
             </div>
           )}
 
-          {/* Pagination & Result Summary */}
           {filteredProducts.length > 0 && (
             <div className="rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm">
               <p className="text-xs sm:text-sm text-gray-500">
@@ -486,7 +505,6 @@ function CollectionViewInner() {
         </div>
       </div>
 
-      {/* Mobile Filters Drawer */}
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-[105] flex lg:hidden">
           <div
